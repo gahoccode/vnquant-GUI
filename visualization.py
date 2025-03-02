@@ -319,7 +319,7 @@ def create_returns_chart(returns_data, symbol=None):
             x=[period],
             y=[value],
             name=period,
-            marker_color='green' if value >= 0 else 'red'
+            marker_color='#21918c' if value >= 0 else '#440154'  # Teal and dark purple from Viridis
         ))
     
     # Update layout
@@ -374,7 +374,7 @@ def create_portfolio_comparison_chart(portfolio_data, benchmark_data=None):
             y=portfolio_data['values'],
             mode='lines',
             name='Portfolio',
-            line=dict(color='blue', width=2)
+            line=dict(color='#21918c', width=2)  # Teal from Viridis
         ))
         
         # Add benchmark if provided
@@ -384,7 +384,7 @@ def create_portfolio_comparison_chart(portfolio_data, benchmark_data=None):
                 y=benchmark_data['values'],
                 mode='lines',
                 name='Benchmark',
-                line=dict(color='red', width=2, dash='dash')
+                line=dict(color='#3b528b', width=2, dash='dash')  # Purple from Viridis
             ))
         
         # Update layout
@@ -443,8 +443,8 @@ def create_efficient_frontier_chart(mpt_data):
             colorbar=dict(
                 title='Sharpe Ratio',
                 titleside='right',
-                titlefont=dict(size=12),
-                tickfont=dict(size=10)
+                titlefont=dict(size=12, color='black'),
+                tickfont=dict(size=10, color='black')
             ),
             line=dict(width=0)
         ),
@@ -487,7 +487,7 @@ def create_efficient_frontier_chart(mpt_data):
         line=dict(color='black', width=2, dash='dash'),
         name='Efficient Frontier',
         hovertemplate='Risk: %{x:.2f}%<br>Return: %{y:.2f}%<extra></extra>',
-        showlegend=False  # Hide from legend
+        showlegend=True  # Changed from False to True
     ))
     
     # Minimum Variance Portfolio
@@ -497,7 +497,7 @@ def create_efficient_frontier_chart(mpt_data):
         mode='markers+text',
         marker=dict(
             size=10,
-            color='darkblue',
+            color='#3b528b',  # Purple from Viridis
             symbol='circle',
             line=dict(width=1, color='black')
         ),
@@ -505,7 +505,7 @@ def create_efficient_frontier_chart(mpt_data):
         text=['Min Variance'],
         textposition='top center',
         textfont=dict(
-            color='darkblue',
+            color='#3b528b',  # Purple from Viridis
             size=12,
             family='Arial, sans-serif'
         ),
@@ -520,15 +520,15 @@ def create_efficient_frontier_chart(mpt_data):
         mode='markers+text',
         marker=dict(
             size=14,
-            color='darkgreen',
+            color='#21918c',  # Teal from Viridis
             symbol='star',
             line=dict(width=1, color='black')
         ),
         name='Max Sharpe Ratio Portfolio',
         text=['Max Sharpe'],
-        textposition='top right',
+        textposition='top center',  
         textfont=dict(
-            color='darkgreen',
+            color='#21918c',  # Teal from Viridis
             size=12,
             family='Arial, sans-serif'
         ),
@@ -539,7 +539,7 @@ def create_efficient_frontier_chart(mpt_data):
     # Maximum Return Portfolio
     # Check if Max Return is very close to Max Sharpe, if so, adjust the text position
     is_close = abs(max_ret['risk'] - max_sharpe['risk']) < 0.5 and abs(max_ret['return'] - max_sharpe['return']) < 0.5
-    text_position = 'bottom right' if not is_close else 'bottom left'
+    text_position = 'top right' if not is_close else 'bottom right'  
     
     fig.add_trace(go.Scatter(
         x=[max_ret['risk'] * 100],  # Convert decimal to percentage
@@ -547,7 +547,7 @@ def create_efficient_frontier_chart(mpt_data):
         mode='markers+text',
         marker=dict(
             size=10,
-            color='darkred',
+            color='#5ec962',  # Green from Viridis
             symbol='diamond',
             line=dict(width=1, color='black')
         ),
@@ -555,7 +555,7 @@ def create_efficient_frontier_chart(mpt_data):
         text=['Max Return'],
         textposition=text_position,
         textfont=dict(
-            color='darkred',
+            color='#5ec962',  # Green from Viridis
             size=12,
             family='Arial, sans-serif'
         ),
@@ -571,7 +571,7 @@ def create_efficient_frontier_chart(mpt_data):
             'x': 0.5,
             'xanchor': 'center',
             'yanchor': 'top',
-            'font': dict(size=16)
+            'font': dict(size=16, color='black')
         },
         xaxis_title={
             'text': 'Volatility, or risk (standard deviation)',
@@ -583,8 +583,8 @@ def create_efficient_frontier_chart(mpt_data):
         },
         legend=dict(
             orientation="v",
-            yanchor="top",
-            y=0.98,
+            yanchor="bottom",  
+            y=0.02,  
             xanchor="right",
             x=0.99,
             bgcolor="rgba(255, 255, 255, 0.8)",
@@ -646,6 +646,11 @@ def create_optimal_portfolio_weights_chart(weights, title):
         # Format values as percentages
         text = [f"{v*100:.1f}%" for v in values]
         
+        # Brighter Viridis colors for the pie chart (focusing on the brightest end of the palette)
+        viridis_colors = ['#fde725', '#95d840', '#5ec962', '#21918c', '#26828e', '#31688e', '#3b528b', '#482878', '#440154', '#3e4989']
+        # If we have more segments than colors, we'll cycle through them
+        colors = [viridis_colors[i % len(viridis_colors)] for i in range(len(labels))]
+        
         fig = go.Figure(data=[go.Pie(
             labels=labels,
             values=values,
@@ -653,12 +658,17 @@ def create_optimal_portfolio_weights_chart(weights, title):
             textinfo='label+text',
             hoverinfo='label+percent',
             marker=dict(
+                colors=colors,  # Use Viridis colors
                 line=dict(color='#000000', width=1)
-            )
+            ),
+            textfont=dict(color='black')
         )])
         
         fig.update_layout(
-            title=title,
+            title={
+                'text': title,
+                'font': dict(color='white', size=16)
+            },
             height=400,
             margin=dict(l=20, r=20, t=40, b=20)
         )
@@ -717,8 +727,25 @@ def create_stock_price_time_series(mpt_data, price_data):
                 x=portfolio_performance.index,
                 y=portfolio_performance.values,
                 mode='lines',
-                name='Optimal Portfolio',
-                line=dict(color='black', width=3, dash='solid')
+                name='Max Sharpe Portfolio',
+                line=dict(color='#21918c', width=3, dash='solid')  # Teal from Viridis
+            ))
+        
+        # Add a line for the minimum variance portfolio
+        if 'min_variance' in mpt_data and 'weights' in mpt_data['min_variance']:
+            weights = mpt_data['min_variance']['weights']
+            min_var_performance = pd.Series(0.0, index=normalized_data.index)
+            
+            for symbol, weight in weights.items():
+                if symbol in normalized_data.columns:
+                    min_var_performance += normalized_data[symbol] * weight
+            
+            fig.add_trace(go.Scatter(
+                x=min_var_performance.index,
+                y=min_var_performance.values,
+                mode='lines',
+                name='Min Variance Portfolio',
+                line=dict(color='#3b528b', width=3, dash='dot')  # Purple from Viridis
             ))
         
         # Update layout
@@ -729,7 +756,7 @@ def create_stock_price_time_series(mpt_data, price_data):
                 'x': 0.5,
                 'xanchor': 'center',
                 'yanchor': 'top',
-                'font': dict(size=16)
+                'font': dict(size=16, color='black')
             },
             xaxis_title={
                 'text': 'Date',
@@ -814,11 +841,11 @@ def create_mpt_comparison_chart(mpt_data):
         # Create figure with subplots
         fig = make_subplots(rows=1, cols=3, subplot_titles=metric_names)
         
-        # Colors for each portfolio
+        # Viridis colorscale colors for each portfolio
         colors = {
-            'Maximum Sharpe Ratio': '#2ca02c',  # Green
-            'Minimum Variance': '#1f77b4',      # Blue
-            'Maximum Return': '#d62728'         # Red
+            'Maximum Sharpe Ratio': '#21918c',  # Teal from Viridis
+            'Minimum Variance': '#3b528b',      # Purple from Viridis
+            'Maximum Return': '#5ec962'         # Green from Viridis
         }
         
         # Add bars for each metric
@@ -833,19 +860,31 @@ def create_mpt_comparison_chart(mpt_data):
                     marker_color=[colors[p] for p in portfolio_names],
                     showlegend=False,
                     text=[f"{v:.2f}%" for v in values],
-                    textposition='auto'
+                    textposition='auto',
+                    textfont=dict(color='black')
                 ),
                 row=1, col=i+1
             )
         
         # Update layout
         fig.update_layout(
-            title='Comparison of Optimal Portfolios',
+            title={
+                'text': 'Comparison of Optimal Portfolios',
+                'font': {'color': 'black', 'size': 16}
+            },
             height=500,
             margin=dict(l=20, r=20, t=60, b=20),
             template='plotly_white',
             paper_bgcolor='white'
         )
+        
+        # Update subplot titles to black
+        for i in fig['layout']['annotations']:
+            i['font'] = dict(color='black', size=14)
+        
+        # Update axes text to black
+        fig.update_xaxes(tickfont=dict(color='black'), title_font=dict(color='black'))
+        fig.update_yaxes(tickfont=dict(color='black'), title_font=dict(color='black'))
         
         return fig
     except Exception as e:
