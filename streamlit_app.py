@@ -75,6 +75,10 @@ try:
             inputs["data_source"],
             table_style=inputs["table_style"]
         )
+        
+        # Store data in session state for download button
+        if data is not None and not data.empty:
+            st.session_state.data = data
     
     if data is not None and not data.empty:
         # Display different pages based on navigation

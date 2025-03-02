@@ -57,6 +57,16 @@ def sidebar_inputs():
     start_date = st.sidebar.text_input("Start Date (YYYY-MM-DD)", value=start_date)
     end_date = st.sidebar.text_input("End Date (YYYY-MM-DD)", value=end_date)
     
+    # Add download button if data is available
+    if 'data' in st.session_state and not st.session_state.data.empty:
+        st.sidebar.download_button(
+            label="📥 Download Price Data",
+            data=st.session_state.data.to_csv(index=True),
+            file_name=f"stock_prices_{start_date}_{end_date}.csv",
+            mime="text/csv",
+            help="Download the complete price data for the selected date range"
+        )
+    
     # Data source
     data_source = st.sidebar.selectbox("Data Source", options=["cafe", "VND"], index=0)
     
