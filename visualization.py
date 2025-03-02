@@ -433,8 +433,8 @@ def create_efficient_frontier_chart(mpt_data):
     
     # Simulated portfolios
     fig.add_trace(go.Scatter(
-        x=sim_data['Risk'] * 100,  # Convert to percentage
-        y=sim_data['Returns'] * 100,  # Convert to percentage
+        x=sim_data['Risk'] * 100,  # Convert decimal to percentage
+        y=sim_data['Returns'] * 100,  # Convert decimal to percentage
         mode='markers',
         marker=dict(
             size=6,
@@ -477,8 +477,8 @@ def create_efficient_frontier_chart(mpt_data):
             best = similar_risk.loc[similar_risk['Returns'].idxmax()]
             ef_points.append((best['Risk'], best['Returns']))
     
-    ef_risk = [p[0] * 100 for p in ef_points]  # Convert to percentage
-    ef_return = [p[1] * 100 for p in ef_points]  # Convert to percentage
+    ef_risk = [p[0] * 100 for p in ef_points]  # Convert decimal to percentage
+    ef_return = [p[1] * 100 for p in ef_points]  # Convert decimal to percentage
     
     fig.add_trace(go.Scatter(
         x=ef_risk,
@@ -492,8 +492,8 @@ def create_efficient_frontier_chart(mpt_data):
     
     # Minimum Variance Portfolio
     fig.add_trace(go.Scatter(
-        x=[min_var['risk']],
-        y=[min_var['return']],
+        x=[min_var['risk'] * 100],  # Convert decimal to percentage
+        y=[min_var['return'] * 100],  # Convert decimal to percentage
         mode='markers+text',
         marker=dict(
             size=10,
@@ -515,8 +515,8 @@ def create_efficient_frontier_chart(mpt_data):
     
     # Maximum Sharpe Ratio Portfolio
     fig.add_trace(go.Scatter(
-        x=[max_sharpe['risk']],
-        y=[max_sharpe['return']],
+        x=[max_sharpe['risk'] * 100],  # Convert decimal to percentage
+        y=[max_sharpe['return'] * 100],  # Convert decimal to percentage
         mode='markers+text',
         marker=dict(
             size=14,
@@ -542,8 +542,8 @@ def create_efficient_frontier_chart(mpt_data):
     text_position = 'bottom right' if not is_close else 'bottom left'
     
     fig.add_trace(go.Scatter(
-        x=[max_ret['risk']],
-        y=[max_ret['return']],
+        x=[max_ret['risk'] * 100],  # Convert decimal to percentage
+        y=[max_ret['return'] * 100],  # Convert decimal to percentage
         mode='markers+text',
         marker=dict(
             size=10,
@@ -823,7 +823,7 @@ def create_mpt_comparison_chart(mpt_data):
         
         # Add bars for each metric
         for i, metric in enumerate(metrics):
-            values = [portfolios[p][metric] for p in portfolios.keys()]
+            values = [portfolios[p][metric] * 100 for p in portfolios.keys()]  # Convert decimal to percentage
             portfolio_names = list(portfolios.keys())
             
             fig.add_trace(
@@ -832,7 +832,7 @@ def create_mpt_comparison_chart(mpt_data):
                     y=values,
                     marker_color=[colors[p] for p in portfolio_names],
                     showlegend=False,
-                    text=[f"{v:.2f}" for v in values],
+                    text=[f"{v:.2f}%" for v in values],
                     textposition='auto'
                 ),
                 row=1, col=i+1

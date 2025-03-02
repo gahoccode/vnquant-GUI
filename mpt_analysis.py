@@ -38,6 +38,7 @@ def display_mpt_page(data, inputs):
     import pandas as pd
     from data_loader import get_price_columns
     
+    # Create a title row 
     st.title("Modern Portfolio Theory (MPT) Analysis")
     
     # Introduction to MPT
@@ -299,28 +300,28 @@ def calculate_mpt_portfolio(data, symbols, price_columns_func, table_style="pref
     
     # Prepare simulation data for efficient frontier visualization
     simulation_data = pd.DataFrame({
-        'Returns': port_returns,
-        'Risk': port_risk,
+        'Returns': port_returns,  # Keep as decimal, not percentage
+        'Risk': port_risk,        # Keep as decimal, not percentage
         'Sharpe': sharpe_ratio
     })
     
     return {
         'simulation_data': simulation_data,
         'max_sharpe': {
-            'return': max_sr_ret * 100,  # Convert to percentage
-            'risk': max_sr_risk * 100,   # Convert to percentage
+            'return': max_sr_ret,  # Keep as decimal, not percentage
+            'risk': max_sr_risk,   # Keep as decimal, not percentage
             'sharpe': sharpe_ratio[max_sr_idx],
             'weights': max_sr_weights
         },
         'max_return': {
-            'return': max_ret_ret * 100,  # Convert to percentage
-            'risk': max_ret_risk * 100,   # Convert to percentage
+            'return': max_ret_ret,  # Keep as decimal, not percentage
+            'risk': max_ret_risk,   # Keep as decimal, not percentage
             'sharpe': sharpe_ratio[max_ret_idx],
             'weights': max_ret_weights
         },
         'min_variance': {
-            'return': min_var_ret * 100,  # Convert to percentage
-            'risk': min_var_risk * 100,   # Convert to percentage
+            'return': min_var_ret,  # Keep as decimal, not percentage
+            'risk': min_var_risk,   # Keep as decimal, not percentage
             'sharpe': sharpe_ratio[min_var_idx],
             'weights': min_var_weights
         }
