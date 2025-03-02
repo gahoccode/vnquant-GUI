@@ -35,8 +35,16 @@ def sidebar_inputs():
     use_file = st.sidebar.checkbox("Use CSV file instead of API", value=False)
     
     file_path = None
+    uploaded_file = None
     if use_file:
-        file_path = st.sidebar.text_input("CSV file path", value="2025-03-01T14-04_export.csv")
+        file_source = st.sidebar.radio("File Source", ["Upload File", "Specify Path"], index=0)
+        
+        if file_source == "Upload File":
+            uploaded_file = st.sidebar.file_uploader("Upload CSV file", type=["csv"])
+            if uploaded_file is not None:
+                st.sidebar.success(f"File uploaded: {uploaded_file.name}")
+        else:
+            file_path = st.sidebar.text_input("CSV file path", value="2025-03-01T14-04_export.csv")
     
     # Stock symbols
     symbols_input = st.sidebar.text_input("Stock Symbols (comma-separated)", value="REE,FMC")
@@ -55,18 +63,25 @@ def sidebar_inputs():
     # Table style
     table_style = st.sidebar.selectbox("Table Style", options=["prefix", "suffix"], index=0)
     
+    # Add risk-free rate slider for MPT calculations
+    st.sidebar.header("MPT Parameters")
+    risk_free_rate = st.sidebar.slider("Risk-Free Rate (%)", min_value=0.0, max_value=10.0, value=3.0, step=0.1, 
+                                     help="Annual risk-free rate used in Sharpe ratio calculations")
+    
     # Advanced indicators for visualization
     advanced_indicators = ["volume"]  # Default to showing volume only
     
     return {
         "use_file": use_file,
         "file_path": file_path,
+        "uploaded_file": uploaded_file,
         "symbols": symbols,
         "start_date": start_date,
         "end_date": end_date,
         "data_source": data_source,
         "table_style": table_style,
-        "advanced_indicators": advanced_indicators
+        "advanced_indicators": advanced_indicators,
+        "risk_free_rate": risk_free_rate / 100  # Convert percentage to decimal
     }
 
 def display_about_sidebar():
@@ -181,9 +196,11 @@ def display_data(data):
     st.write(f"Columns: {len(data.columns)}")
     st.write(f"Date Range: {data.index.min()} to {data.index.max()}")
     
-    # Display the data
+    # Function to display the data table
     st.subheader("Data Preview")
-    st.dataframe(data.head())
+    st.dataframe(data.head(10))
+    
+    # Note: Download features have been removed
 
 def display_success(message):
     """Display a success message"""

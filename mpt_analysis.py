@@ -10,17 +10,13 @@ import plotly.graph_objects as go
 import plotly.express as px
 import traceback
 from plotly.subplots import make_subplots
+import datetime
 
 # Import our custom modules
 import data_loader as dl
 import streamlit_components as sc
-# Import visualization functions from visualization module
-from visualization import (
-    create_efficient_frontier_chart,
-    create_optimal_portfolio_weights_chart,
-    create_stock_price_time_series,
-    create_mpt_comparison_chart
-)
+# Import visualization module
+import visualization as viz
 
 def display_mpt_page(data, inputs):
     """
@@ -81,7 +77,8 @@ def display_mpt_page(data, inputs):
                     symbols=symbols,
                     price_columns_func=get_price_columns,
                     table_style=inputs.get('table_style', 'prefix'),
-                    num_port=5000
+                    num_port=5000,
+                    risk_free_rate=inputs.get('risk_free_rate', 0.03)
                 )
                 
                 if mpt_data:
@@ -92,41 +89,11 @@ def display_mpt_page(data, inputs):
                         if adj_price is not None:
                             price_data[symbol] = adj_price
                     
-                    # Create dashboard layout
-                    col1, col2 = st.columns([1, 1])
-                    
-                    # Set equal heights for both charts
+                    # Set equal heights for charts
                     chart_height = 500
+                    pie_chart_height = 400
                     
-                    # Efficient Frontier in first column
-                    with col1:
-                        ef_chart = create_efficient_frontier_chart(mpt_data)
-                        if ef_chart:
-                            # Update height to match
-                            ef_chart.update_layout(height=chart_height)
-                            st.plotly_chart(ef_chart, use_container_width=True)
-                    
-                    # Time series chart in second column
-                    with col2:
-                        # Create tabs for different views
-                        view_tabs = st.tabs(["Performance Over Time", "Portfolio Metrics"])
-                        
-                        with view_tabs[0]:
-                            time_series = create_stock_price_time_series(mpt_data, price_data)
-                            if time_series:
-                                # Update height to match
-                                time_series.update_layout(height=chart_height)
-                                st.plotly_chart(time_series, use_container_width=True)
-                        
-                        with view_tabs[1]:
-                            # Create a comparison chart for the three optimal portfolios
-                            comparison_chart = create_mpt_comparison_chart(mpt_data)
-                            if comparison_chart:
-                                # Update height to match
-                                comparison_chart.update_layout(height=chart_height)
-                                st.plotly_chart(comparison_chart, use_container_width=True)
-                    
-                    # Portfolio weights charts in a row below
+                    # Portfolio weights charts at the top
                     st.write("### Optimal Portfolio Weights")
                     
                     weight_cols = st.columns(3)
@@ -139,11 +106,12 @@ def display_mpt_page(data, inputs):
                         st.metric("Risk (Volatility)", f"{max_sharpe['risk']:.2f}%")
                         st.metric("Sharpe Ratio", f"{max_sharpe['sharpe']:.2f}")
                         
-                        weights_chart = create_optimal_portfolio_weights_chart(
+                        weights_chart = viz.create_optimal_portfolio_weights_chart(
                             max_sharpe['weights'],
                             "Max Sharpe Portfolio"
                         )
                         if weights_chart:
+                            weights_chart.update_layout(height=pie_chart_height)
                             st.plotly_chart(weights_chart, use_container_width=True)
                     
                     # Minimum Variance Portfolio
@@ -154,11 +122,12 @@ def display_mpt_page(data, inputs):
                         st.metric("Risk (Volatility)", f"{min_var['risk']:.2f}%")
                         st.metric("Sharpe Ratio", f"{min_var['sharpe']:.2f}")
                         
-                        weights_chart = create_optimal_portfolio_weights_chart(
+                        weights_chart = viz.create_optimal_portfolio_weights_chart(
                             min_var['weights'],
                             "Min Variance Portfolio"
                         )
                         if weights_chart:
+                            weights_chart.update_layout(height=pie_chart_height)
                             st.plotly_chart(weights_chart, use_container_width=True)
                     
                     # Maximum Return Portfolio
@@ -169,29 +138,102 @@ def display_mpt_page(data, inputs):
                         st.metric("Risk (Volatility)", f"{max_ret['risk']:.2f}%")
                         st.metric("Sharpe Ratio", f"{max_ret['sharpe']:.2f}")
                         
-                        weights_chart = create_optimal_portfolio_weights_chart(
+                        weights_chart = viz.create_optimal_portfolio_weights_chart(
                             max_ret['weights'],
                             "Max Return Portfolio"
                         )
                         if weights_chart:
+                            weights_chart.update_layout(height=pie_chart_height)
                             st.plotly_chart(weights_chart, use_container_width=True)
+                    
+                    # Create dashboard layout for the main charts
+                    col1, col2 = st.columns([1, 1])
+                    
+                    # Efficient Frontier in first column
+                    with col1:
+                        ef_chart = viz.create_efficient_frontier_chart(mpt_data)
+                        if ef_chart:
+                            # Update height to match
+                            ef_chart.update_layout(height=chart_height)
+                            st.plotly_chart(ef_chart, use_container_width=True)
+                    
+                    # Portfolio Metrics in second column
+                    with col2:
+                        # Create a comparison chart for the three optimal portfolios
+                        comparison_chart = viz.create_mpt_comparison_chart(mpt_data)
+                        if comparison_chart:
+                            # Update height to match
+                            comparison_chart.update_layout(height=chart_height)
+                            st.plotly_chart(comparison_chart, use_container_width=True)
+                    
+                    # Performance Over Time chart below Efficient Frontier (full width)
+                    time_series = viz.create_stock_price_time_series(mpt_data, price_data)
+                    if time_series:
+                        # Update height to match
+                        time_series.update_layout(height=chart_height)
+                        st.plotly_chart(time_series, use_container_width=True)
+                    
+                    # Display the metrics and weights as tables instead of download options
+                    st.subheader("Portfolio Metrics")
+                    
+                    # Create a DataFrame with the metrics
+                    metrics_df = pd.DataFrame({
+                        "Portfolio": ["Max Sharpe Ratio", "Min Variance", "Max Return"],
+                        "Expected Return (%)": [
+                            mpt_data["max_sharpe"]["return"] * 100,
+                            mpt_data["min_variance"]["return"] * 100,
+                            mpt_data["max_return"]["return"] * 100
+                        ],
+                        "Risk (%)": [
+                            mpt_data["max_sharpe"]["risk"] * 100,
+                            mpt_data["min_variance"]["risk"] * 100,
+                            mpt_data["max_return"]["risk"] * 100
+                        ],
+                        "Sharpe Ratio": [
+                            mpt_data["max_sharpe"]["sharpe"],
+                            mpt_data["min_variance"]["sharpe"],
+                            mpt_data["max_return"]["sharpe"]
+                        ]
+                    })
+                    
+                    # Display metrics table
+                    st.dataframe(metrics_df)
+                    
+                    # Create a DataFrame with the weights
+                    weights_data = {}
+                    for symbol in symbols:
+                        weights_data[symbol] = [
+                            mpt_data["max_sharpe"]["weights"][symbol] * 100,
+                            mpt_data["min_variance"]["weights"][symbol] * 100,
+                            mpt_data["max_return"]["weights"][symbol] * 100
+                        ]
+                    
+                    weights_df = pd.DataFrame(
+                        weights_data,
+                        index=["Max Sharpe Ratio", "Min Variance", "Max Return"]
+                    )
+                    
+                    st.subheader("Portfolio Weights (%)")
+                    st.dataframe(weights_df)
                     
                     # Add detailed explanation
                     with st.expander("Understanding the Results", expanded=False):
-                        st.markdown("""
+                        st.markdown(f"""
                         ### How to Interpret These Results
                         
                         **Monte Carlo Simulation**: This analysis uses Monte Carlo simulation to generate thousands of random portfolio allocations. Each dot in the scatter plot represents one possible portfolio with a unique allocation of assets.
                         
-                        **Efficient Frontier Chart**: The curved line shows the optimal portfolios that offer the highest return for a given level of risk. The three highlighted portfolios represent key optimal strategies:
+                        **Efficient Frontier**: The curved line represents the efficient frontier - portfolios that offer the highest expected return for a given level of risk.
                         
-                        1. **Maximum Sharpe Ratio Portfolio** (star): Offers the best risk-adjusted return, balancing risk and return optimally.
-                        2. **Minimum Variance Portfolio** (circle): Has the lowest possible risk, ideal for conservative investors.
-                        3. **Maximum Return Portfolio** (diamond): Provides the highest expected return, but with higher risk.
+                        **Sharpe Ratio**: The Sharpe ratio measures risk-adjusted performance, calculated as (Return - Risk-Free Rate) / Risk. A higher Sharpe ratio indicates better risk-adjusted performance. The current risk-free rate is set to **{inputs.get('risk_free_rate', 0.03)*100:.1f}%**.
                         
-                        **Portfolio Weights**: The pie charts show how your investment should be allocated across different assets for each optimal portfolio strategy. These weights are determined by the Monte Carlo simulation and represent the specific allocations that achieve each portfolio's objective.
+                        **Three Optimal Portfolios**:
                         
-                        **Sharpe Ratio**: A measure of risk-adjusted return. Higher is better. Calculated as (portfolio return - risk-free rate) / portfolio standard deviation.
+                        1. **Maximum Sharpe Ratio Portfolio**: Offers the best risk-adjusted return (highest Sharpe ratio)
+                        2. **Minimum Variance Portfolio**: Has the lowest risk (volatility)
+                        3. **Maximum Return Portfolio**: Provides the highest expected return, typically with higher risk
+                        
+                        **Portfolio Weights**: The pie charts show the allocation of assets in each optimal portfolio. These weights represent the percentage of your investment that should be allocated to each stock.
                         """)
                 else:
                     st.warning("Could not calculate MPT metrics. Check if all symbols have sufficient data.")
@@ -202,7 +244,7 @@ def display_mpt_page(data, inputs):
         st.warning("Modern Portfolio Theory requires at least two symbols. Please add more symbols in the sidebar.")
 
 
-def calculate_mpt_portfolio(data, symbols, price_columns_func, table_style="prefix", num_port=5000):
+def calculate_mpt_portfolio(data, symbols, price_columns_func, table_style="prefix", num_port=5000, risk_free_rate=0.03):
     """
     Calculate Modern Portfolio Theory (MPT) metrics and optimal portfolios.
     According to MPT, we can find optimal portfolios that maximize return for a given level of risk.
@@ -213,6 +255,7 @@ def calculate_mpt_portfolio(data, symbols, price_columns_func, table_style="pref
         price_columns_func: Function to get price columns
         table_style: Style of table ('prefix' or 'suffix')
         num_port: Number of random portfolios to simulate
+        risk_free_rate: Annual risk-free rate (decimal) for Sharpe ratio calculation
         
     Returns:
         Dictionary with MPT metrics and optimal portfolios
@@ -270,8 +313,8 @@ def calculate_mpt_portfolio(data, symbols, price_columns_func, table_style="pref
         port_sd = np.sqrt(np.dot(wts.T, np.dot(cov_mat, wts)))
         port_risk[i] = port_sd
         
-        # Calculate Sharpe Ratio, assuming a risk-free rate of 0%
-        sr = port_ret / port_sd if port_sd > 0 else 0
+        # Calculate Sharpe Ratio using the specified risk-free rate
+        sr = (port_ret - risk_free_rate) / port_sd if port_sd > 0 else 0
         sharpe_ratio[i] = sr
     
     # Identify portfolios with max Sharpe ratio, max return, and minimum variance

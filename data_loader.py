@@ -45,6 +45,23 @@ def load_stock_data_from_file(file_path):
         data.set_index('date', inplace=True)
     return data
 
+def load_stock_data_from_uploaded_file(uploaded_file):
+    """
+    Load stock data from an uploaded CSV file
+    
+    Args:
+        uploaded_file: Streamlit UploadedFile object
+        
+    Returns:
+        DataFrame with stock data
+    """
+    data = pd.read_csv(uploaded_file)
+    # Convert date column to datetime and set as index
+    if 'date' in data.columns:
+        data['date'] = pd.to_datetime(data['date'])
+        data.set_index('date', inplace=True)
+    return data
+
 def get_price_columns(data, symbol, table_style="prefix"):
     """
     Get close and adjust price columns for a symbol.

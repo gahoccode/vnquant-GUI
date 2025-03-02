@@ -441,9 +441,11 @@ def create_efficient_frontier_chart(mpt_data):
             color=sim_data['Sharpe'],
             colorscale='Viridis',
             colorbar=dict(
-                title='Sharpe Ratio',
-                titleside='right',
-                titlefont=dict(size=12, color='black'),
+                title=dict(
+                    text='Sharpe Ratio',
+                    side='right',
+                    font=dict(size=12, color='black')
+                ),
                 tickfont=dict(size=10, color='black')
             ),
             line=dict(width=0)

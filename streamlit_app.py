@@ -37,10 +37,26 @@ current_page = sc.get_current_page()
 # Load data based on user inputs
 try:
     # Load data
-    if inputs.get("use_file", False) and inputs.get("file_path"):
+    if inputs.get("use_file", False):
         try:
-            data = dl.load_stock_data_from_file(inputs["file_path"])
-            st.success(f"Data loaded from {inputs['file_path']}")
+            if inputs.get("uploaded_file") is not None:
+                # Load from uploaded file
+                data = dl.load_stock_data_from_uploaded_file(inputs["uploaded_file"])
+                st.success(f"Data loaded from uploaded file: {inputs['uploaded_file'].name}")
+            elif inputs.get("file_path"):
+                # Load from file path
+                data = dl.load_stock_data_from_file(inputs["file_path"])
+                st.success(f"Data loaded from {inputs['file_path']}")
+            else:
+                st.error("No file provided. Please upload a file or specify a file path.")
+                # Fallback to API data
+                data = dl.load_stock_data(
+                    inputs["symbols"], 
+                    inputs["start_date"], 
+                    inputs["end_date"], 
+                    inputs["data_source"],
+                    table_style=inputs["table_style"]
+                )
         except Exception as e:
             st.error(f"Error loading file: {str(e)}")
             # Fallback to API data
