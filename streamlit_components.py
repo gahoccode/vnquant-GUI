@@ -56,15 +56,7 @@ def sidebar_inputs():
     table_style = st.sidebar.selectbox("Table Style", options=["prefix", "suffix"], index=0)
     
     # Advanced indicators for visualization
-    st.sidebar.header("Visualization Parameters")
-    
-    advanced_indicators = []
-    if st.sidebar.checkbox("Show Volume", value=True):
-        advanced_indicators.append("volume")
-    if st.sidebar.checkbox("Show MACD", value=False):
-        advanced_indicators.append("macd")
-    if st.sidebar.checkbox("Show RSI", value=False):
-        advanced_indicators.append("rsi")
+    advanced_indicators = ["volume"]  # Default to showing volume only
     
     return {
         "use_file": use_file,
@@ -134,6 +126,32 @@ def get_portfolio_weights(symbols):
     
     # Convert percentages to decimals
     return {symbol: weight / 100.0 for symbol, weight in weight_inputs.items()}
+
+def get_current_page():
+    """
+    Get the current page from the sidebar navigation
+    
+    Returns:
+        String with the current page name
+    """
+    # Initialize session state for page navigation if it doesn't exist
+    if 'current_page' not in st.session_state:
+        st.session_state.current_page = "Home"
+    
+    st.sidebar.header("Navigation")
+    
+    # Create radio buttons for page navigation
+    page = st.sidebar.radio(
+        "Go to",
+        options=["Home", "Modern Portfolio Theory"],
+        index=0 if st.session_state.current_page == "Home" else 1,
+        key="page_navigation"
+    )
+    
+    # Update session state
+    st.session_state.current_page = page
+    
+    return page
 
 def display_data(data):
     """Display the loaded data"""
