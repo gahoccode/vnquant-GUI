@@ -88,11 +88,24 @@ def display_about_sidebar():
     """Display about information in sidebar"""
     st.sidebar.header("About")
     st.sidebar.info("""
-    This app uses the VNQuant library to analyze Vietnamese stock data.
+    ### Modern Portfolio Theory (MPT)
+    Modern Portfolio Theory, developed by Harry Markowitz in 1952, is a mathematical framework for assembling a portfolio of assets that maximizes expected return for a given level of risk. The key insight of MPT is that an asset's risk and return should not be assessed individually, but by how it contributes to a portfolio's overall risk and return.
     
-    Data is loaded from the specified source and displayed in various formats.
+    In this application, MPT is implemented through:
+    - Calculation of expected returns and covariance matrix from historical data
+    - Generation of the efficient frontier showing optimal risk-return combinations
+    - Identification of three key portfolios: Maximum Sharpe Ratio (best risk-adjusted return), Minimum Variance (lowest risk), and Maximum Return
     
-    All stock performance calculations use adjusted prices as required by the rules.
+    ### Monte Carlo Simulation
+    Monte Carlo simulation is a computational technique that uses random sampling to obtain numerical results. In portfolio optimization:
+    
+    - We generate thousands (5,000) of random portfolio weights
+    - Each portfolio's expected return, risk, and Sharpe ratio are calculated
+    - This creates a "cloud" of possible portfolios in risk-return space
+    - The efficient frontier emerges as the upper boundary of this cloud
+    - Optimal portfolios are identified from these simulations
+    
+    This approach allows us to visualize the entire range of possible portfolios and identify those with the most desirable characteristics.
     """)
     
     # Add GitHub link at the bottom of the sidebar
@@ -109,8 +122,7 @@ def display_about_sidebar():
             </a>
             <p style="font-size: 0.8em; margin-top: 5px;">View on GitHub</p>
         </div>
-        """, 
-        unsafe_allow_html=True
+        """, unsafe_allow_html=True
     )
 
 def get_portfolio_weights(symbols):

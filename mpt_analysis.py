@@ -61,6 +61,36 @@ def display_mpt_page(data, inputs):
     
     if len(symbols) >= 2:
         st.write("### Portfolio Optimization")
+        
+        # Add return calculation method selection
+        return_method = st.selectbox(
+            "Return Calculation Method",
+            ["pct_change", "log"],
+            index=0,
+            help="Select the method to calculate returns: percentage change (pct_change) or logarithmic returns (log)"
+        )
+        
+        # Update inputs with the selected return method
+        inputs['return_method'] = return_method
+        
+        # Add explanation about return calculation methods
+        with st.expander("About Return Calculation Methods", expanded=False):
+            st.markdown("""
+            **Percentage Returns (pct_change)**
+            - Simple percentage change from one period to the next
+            - More intuitive and directly interpretable (e.g., 5% means price increased by 5%)
+            - Commonly used in financial reporting and by many practitioners
+            
+            **Logarithmic Returns (log)**
+            - Natural logarithm of the ratio of prices
+            - Mathematically convenient for multi-period analysis (log returns are additive over time)
+            - Better statistical properties (more normally distributed)
+            - Often preferred in academic research and sophisticated risk models
+            
+            For most purposes, both methods will yield similar results, especially for short time horizons and small returns.
+            However, the differences become more pronounced with larger price movements or when compounding over longer periods.
+            """)
+        
         st.write("Analyzing optimal portfolios based on historical data...")
         
         # Add Monte Carlo explanation
@@ -78,7 +108,8 @@ def display_mpt_page(data, inputs):
                     price_columns_func=get_price_columns,
                     table_style=inputs.get('table_style', 'prefix'),
                     num_port=5000,
-                    risk_free_rate=inputs.get('risk_free_rate', 0.03)
+                    risk_free_rate=inputs.get('risk_free_rate', 0.03),
+                    return_method=inputs.get('return_method', 'pct_change')
                 )
                 
                 if mpt_data:
@@ -244,7 +275,7 @@ def display_mpt_page(data, inputs):
         st.warning("Modern Portfolio Theory requires at least two symbols. Please add more symbols in the sidebar.")
 
 
-def calculate_mpt_portfolio(data, symbols, price_columns_func, table_style="prefix", num_port=5000, risk_free_rate=0.03):
+def calculate_mpt_portfolio(data, symbols, price_columns_func, table_style="prefix", num_port=5000, risk_free_rate=0.03, return_method="pct_change"):
     """
     Calculate Modern Portfolio Theory (MPT) metrics and optimal portfolios.
     According to MPT, we can find optimal portfolios that maximize return for a given level of risk.
@@ -256,6 +287,7 @@ def calculate_mpt_portfolio(data, symbols, price_columns_func, table_style="pref
         table_style: Style of table ('prefix' or 'suffix')
         num_port: Number of random portfolios to simulate
         risk_free_rate: Annual risk-free rate (decimal) for Sharpe ratio calculation
+        return_method: Method to calculate returns ('pct_change' or 'log')
         
     Returns:
         Dictionary with MPT metrics and optimal portfolios
@@ -276,11 +308,16 @@ def calculate_mpt_portfolio(data, symbols, price_columns_func, table_style="pref
     # Clean data by removing NaN values
     df_clean = price_data.dropna()
     
-    # Calculate log returns
-    log_ret = np.log(df_clean / df_clean.shift(1)).dropna()
+    # Calculate returns based on selected method
+    if return_method == "log":
+        # Calculate log returns
+        returns = np.log(df_clean / df_clean.shift(1)).dropna()
+    else:
+        # Calculate percentage returns using pct_change
+        returns = df_clean.pct_change().dropna()
     
-    # Calculate covariance matrix of log returns (annualized)
-    cov_mat = log_ret.cov() * 252
+    # Calculate covariance matrix of returns (annualized)
+    cov_mat = returns.cov() * 252
     
     # Initialize arrays for portfolio weights, returns, risk, and Sharpe ratios
     all_wts = np.zeros((num_port, len(df_clean.columns)))
@@ -305,8 +342,14 @@ def calculate_mpt_portfolio(data, symbols, price_columns_func, table_style="pref
         all_wts[i, :] = wts
         
         # Calculate portfolio return (annualized)
-        port_ret = np.sum(log_ret.mean() * wts)
-        port_ret = (port_ret + 1) ** 252 - 1  # Annualize the return (252 trading days)
+        port_ret = np.sum(returns.mean() * wts)
+        
+        # Annualize the return (252 trading days)
+        if return_method == "log":
+            port_ret = (port_ret + 1) ** 252 - 1
+        else:
+            port_ret = (1 + port_ret) ** 252 - 1
+            
         port_returns[i] = port_ret
         
         # Calculate portfolio risk (standard deviation)
