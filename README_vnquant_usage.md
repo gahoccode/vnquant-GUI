@@ -26,6 +26,72 @@ pip install -e .
 
 This will install the package in development mode, allowing you to make changes to the code and have them immediately reflected without reinstalling.
 
+## Docker Deployment
+
+For containerized deployment, VNQuant-GUI provides a Docker setup that ensures consistent environments across different systems.
+
+### Prerequisites
+- Docker installed on your system
+- Docker Compose (optional, for easier management)
+
+### Quick Start with Docker
+
+1. **Build the Docker Image**
+```bash
+# From the vnquant-GUI directory
+docker build -t vnquant-gui .
+```
+
+2. **Run the Container**
+```bash
+# Run with default settings
+docker run -p 8501:8501 vnquant-gui
+
+# Run with custom volume for data persistence
+docker run -p 8501:8501 -v $(pwd)/data:/app/data vnquant-gui
+```
+
+3. **Access the Application**
+- Open your browser and navigate to `http://localhost:8501`
+- The Streamlit interface will load with all features:
+  - Stock data visualization
+  - Modern Portfolio Theory analysis
+  - Portfolio optimization tools
+
+### Environment Variables
+You can customize the deployment using environment variables:
+```bash
+docker run -p 8501:8501 \
+  -e STREAMLIT_SERVER_PORT=8501 \
+  -e STREAMLIT_SERVER_ADDRESS=0.0.0.0 \
+  vnquant-gui
+```
+
+### Data Handling and Persistence
+- Mount a volume to persist data between container restarts
+- Useful for saving analysis results and configurations
+- Ensures consistent access to adjusted price data
+- Maintains MPT analysis results and portfolio optimizations
+```bash
+docker run -p 8501:8501 \
+  -v $(pwd)/data:/app/data \
+  -v $(pwd)/config:/app/config \
+  vnquant-gui
+```
+
+**Note on Data Processing:**
+- The containerized application maintains all core calculation requirements:
+  - Uses adjusted close prices for all portfolio calculations
+  - Implements log returns for accurate risk assessment
+  - Applies 252-day annualization for metrics
+  - Supports both CAFE and VND data sources
+
+### Production Deployment Tips
+1. Use specific version tags for stability
+2. Configure proper security settings
+3. Set up monitoring and logging
+4. Consider using Docker Compose for multi-container setups
+
 
 ## Basic Usage
 
