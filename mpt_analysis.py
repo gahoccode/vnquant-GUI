@@ -305,6 +305,9 @@ def calculate_mpt_portfolio(data, symbols, price_columns_func, table_style="pref
     if price_data.empty or len(price_data.columns) < 2:
         return None
     
+    # Sort index chronologically
+    price_data = price_data.sort_index()
+    
     # Clean data by removing NaN values
     df_clean = price_data.dropna()
     
@@ -350,11 +353,11 @@ def calculate_mpt_portfolio(data, symbols, price_columns_func, table_style="pref
         else:
             port_ret = (1 + port_ret) ** 252 - 1
             
-        port_returns[i] = port_ret
+        port_returns[i] = port_ret * 100  # Convert to percentage
         
         # Calculate portfolio risk (standard deviation)
         port_sd = np.sqrt(np.dot(wts.T, np.dot(cov_mat, wts)))
-        port_risk[i] = port_sd
+        port_risk[i] = port_sd * 100  # Convert to percentage
         
         # Calculate Sharpe Ratio using the specified risk-free rate
         sr = (port_ret - risk_free_rate) / port_sd if port_sd > 0 else 0
@@ -386,28 +389,28 @@ def calculate_mpt_portfolio(data, symbols, price_columns_func, table_style="pref
     
     # Prepare simulation data for efficient frontier visualization
     simulation_data = pd.DataFrame({
-        'Returns': port_returns,  # Keep as decimal, not percentage
-        'Risk': port_risk,        # Keep as decimal, not percentage
+        'Returns': port_returns,  # Already in percentage
+        'Risk': port_risk,        # Already in percentage
         'Sharpe': sharpe_ratio
     })
     
     return {
         'simulation_data': simulation_data,
         'max_sharpe': {
-            'return': max_sr_ret,  # Keep as decimal, not percentage
-            'risk': max_sr_risk,   # Keep as decimal, not percentage
+            'return': max_sr_ret,  # Already in percentage
+            'risk': max_sr_risk,   # Already in percentage
             'sharpe': sharpe_ratio[max_sr_idx],
             'weights': max_sr_weights
         },
         'max_return': {
-            'return': max_ret_ret,  # Keep as decimal, not percentage
-            'risk': max_ret_risk,   # Keep as decimal, not percentage
+            'return': max_ret_ret,  # Already in percentage
+            'risk': max_ret_risk,   # Already in percentage
             'sharpe': sharpe_ratio[max_ret_idx],
             'weights': max_ret_weights
         },
         'min_variance': {
-            'return': min_var_ret,  # Keep as decimal, not percentage
-            'risk': min_var_risk,   # Keep as decimal, not percentage
+            'return': min_var_ret,  # Already in percentage
+            'risk': min_var_risk,   # Already in percentage
             'sharpe': sharpe_ratio[min_var_idx],
             'weights': min_var_weights
         }

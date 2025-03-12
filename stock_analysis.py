@@ -19,6 +19,9 @@ def calculate_returns(prices):
     if len(prices) < 2:
         return None
     
+    # Sort prices chronologically
+    prices = prices.sort_index()
+    
     # Calculate returns
     daily_returns = prices.pct_change().dropna()
     
@@ -145,6 +148,9 @@ def calculate_risk_metrics(prices):
     """
     if len(prices) < 30:  # Need sufficient data for meaningful risk metrics
         return None
+    
+    # Sort prices chronologically
+    prices = prices.sort_index()
     
     # Calculate returns
     returns = prices.pct_change().dropna()
